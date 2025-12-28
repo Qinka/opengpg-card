@@ -1,0 +1,46 @@
+[package]
+name = "opengpg-card"
+version = "0.1.0"
+authors = ["Qinka"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+# ESP32-S3 HAL
+esp-hal = { version = "1.0", features = ["esp32s3"] }
+esp-backtrace = { version = "0.18", features = ["esp32s3", "panic-handler", "println"] }
+esp-println = { version = "0.16", features = ["esp32s3"] }
+esp-alloc = { version = "0.6" }
+esp-storage = { version = "0.4", features = ["esp32s3"] }
+
+# Cryptography
+rsa = { version = "0.9", default-features = false, features = ["sha2"] }
+p256 = { version = "0.13", default-features = false, features = ["ecdsa", "arithmetic"] }
+p384 = { version = "0.13", default-features = false, features = ["ecdsa", "arithmetic"] }
+ed25519-dalek = { version = "2.1", default-features = false, features = ["rand_core"] }
+x25519-dalek = { version = "2.0", default-features = false, features = ["static_secrets"] }
+sha2 = { version = "0.10", default-features = false }
+aes = { version = "0.8", default-features = false }
+cbc = { version = "0.1", default-features = false }
+rand_core = { version = "0.6", default-features = false }
+signature = { version = "2.2", default-features = false }
+digest = { version = "0.10", default-features = false }
+
+# Utilities
+heapless = "0.8"
+log = "0.4"
+embedded-io = "0.6"
+
+[profile.dev]
+# Rust debug is too slow. 
+# For debug builds always builds with some optimization
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1 # LLVM can perform better optimizations using a single thread
+debug = 2
+debug-assertions = false
+incremental = false
+lto = 'fat'
+opt-level = 'z'
+overflow-checks = false
