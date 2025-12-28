@@ -1,0 +1,4 @@
+[toolchain]
+channel = "nightly-2024-02-01"
+components = ["rustfmt", "rustc-dev", "rust-src"]
+targets = ["xtensa-esp32s3-none-elf"]
