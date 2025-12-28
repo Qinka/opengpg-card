@@ -77,7 +77,8 @@ impl PinManager {
                     return Err(PinError::Blocked);
                 }
 
-                if pin == self.user_pin.as_slice() {
+                // Constant-time comparison to prevent timing attacks
+                if constant_time_compare(pin, self.user_pin.as_slice()) {
                     self.user_pin_verified = true;
                     self.user_pin_retries = USER_PIN_MAX_RETRIES;
                     Ok(())
@@ -92,7 +93,8 @@ impl PinManager {
                     return Err(PinError::Blocked);
                 }
 
-                if pin == self.admin_pin.as_slice() {
+                // Constant-time comparison to prevent timing attacks
+                if constant_time_compare(pin, self.admin_pin.as_slice()) {
                     self.admin_pin_verified = true;
                     self.admin_pin_retries = ADMIN_PIN_MAX_RETRIES;
                     Ok(())
@@ -198,6 +200,30 @@ pub enum PinError {
     Blocked,
     /// Invalid PIN length
     InvalidLength,
+}
+
+/// Constant-time comparison to prevent timing attacks
+/// 
+/// This function always compares all bytes regardless of when a mismatch is found,
+/// preventing attackers from using timing information to determine PIN values.
+fn constant_time_compare(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        // Even when lengths differ, we still perform a comparison
+        // to maintain constant-time behavior
+        let mut result = 1u8;
+        for i in 0..a.len().min(b.len()) {
+            result |= a[i] ^ b[i];
+        }
+        // XOR with length difference
+        result |= (a.len() ^ b.len()) as u8;
+        return false;
+    }
+    
+    let mut result = 0u8;
+    for i in 0..a.len() {
+        result |= a[i] ^ b[i];
+    }
+    result == 0
 }
 
 #[cfg(test)]

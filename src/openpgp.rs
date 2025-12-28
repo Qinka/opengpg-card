@@ -12,6 +12,12 @@ use heapless::Vec;
 /// OpenPGP Application Identifier (AID)
 const OPENPGP_AID: &[u8] = b"\xD2\x76\x00\x01\x24\x01";
 
+/// Minimum PIN length
+const MIN_PIN_LENGTH: usize = 6;
+
+/// Default Admin PIN length
+const DEFAULT_ADMIN_PIN_LENGTH: usize = 8;
+
 /// Maximum response data size
 const MAX_RESPONSE_SIZE: usize = 4096;
 
@@ -152,7 +158,7 @@ impl OpenPgpCard {
             if self.pin_manager.is_verified(pin_type) {
                 return ApduResponse::new(&[]);
             } else {
-                let retries = self.pin_manager.get_retries(pin_type);
+                // Return verification failed without revealing retry count
                 return ApduResponse::error(StatusWord::VerificationFailed);
             }
         }
@@ -162,7 +168,9 @@ impl OpenPgpCard {
             Err(crate::pin::PinError::Blocked) => {
                 ApduResponse::error(StatusWord::AuthenticationBlocked)
             }
-            Err(crate::pin::PinError::IncorrectPin(_)) => {
+            Err(crate::pin::PinError::IncorrectPin(_retries)) => {
+                // Note: We don't return the retry count in the response to avoid
+                // information leakage. The retry count is maintained internally.
                 ApduResponse::error(StatusWord::VerificationFailed)
             }
             Err(_) => ApduResponse::error(StatusWord::UnknownError),
@@ -177,12 +185,12 @@ impl OpenPgpCard {
         };
         
         // Data should contain: old_pin || new_pin
-        if command.data.len() < 12 {
+        if command.data.len() < MIN_PIN_LENGTH * 2 {
             return ApduResponse::error(StatusWord::WrongLength);
         }
         
-        let old_pin = &command.data[0..6];
-        let new_pin = &command.data[6..];
+        let old_pin = &command.data[0..MIN_PIN_LENGTH];
+        let new_pin = &command.data[MIN_PIN_LENGTH..];
         
         match self.pin_manager.change_pin(pin_type, old_pin, new_pin) {
             Ok(_) => ApduResponse::new(&[]),
@@ -192,12 +200,12 @@ impl OpenPgpCard {
     
     /// Handle RESET RETRY COUNTER command
     fn handle_reset_retry_counter(&mut self, command: &ApduCommand) -> ApduResponse {
-        if command.data.len() < 14 {
+        if command.data.len() < DEFAULT_ADMIN_PIN_LENGTH + MIN_PIN_LENGTH {
             return ApduResponse::error(StatusWord::WrongLength);
         }
         
-        let admin_pin = &command.data[0..8];
-        let new_user_pin = &command.data[8..];
+        let admin_pin = &command.data[0..DEFAULT_ADMIN_PIN_LENGTH];
+        let new_user_pin = &command.data[DEFAULT_ADMIN_PIN_LENGTH..];
         
         match self.pin_manager.reset_retry_counter(admin_pin, new_user_pin) {
             Ok(_) => ApduResponse::new(&[]),
