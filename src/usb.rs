@@ -2,12 +2,17 @@
 //!
 //! Implements USB CCID (Chip Card Interface Device) protocol
 //! for communication with host applications like GnuPG.
+//!
+//! Note: This is a placeholder implementation that demonstrates the structure.
+//! A full implementation would require:
+//! - USB device descriptor with CCID class
+//! - Endpoint configuration (Bulk IN/OUT, Interrupt IN)
+//! - Proper USB state machine handling
+//! - CCID protocol state tracking
+//! - Buffer management for USB transfers
 
 use crate::apdu::ApduCommand;
 use crate::openpgp::OpenPgpCard;
-use embassy_executor::Spawner;
-use embassy_time::{Duration, Timer};
-use esp_hal::peripherals::USB0;
 use heapless::Vec;
 
 /// Maximum USB packet size
@@ -37,67 +42,27 @@ enum SlotStatus {
     ClockStopped = 0x01,
 }
 
-/// USB task for handling CCID communication
-#[embassy_executor::task]
-pub async fn usb_task(usb: USB0, mut card: OpenPgpCard) {
-    log::info!("USB task started");
-    
-    // In a real implementation:
-    // - Initialize USB device with CCID descriptor
-    // - Configure endpoints (Bulk IN, Bulk OUT, Interrupt IN)
-    // - Handle USB enumeration
-    // - Process CCID messages
-    // - Forward APDU commands to OpenPGP card
-    
-    // Placeholder implementation
-    let mut counter = 0u32;
-    
-    loop {
-        Timer::after(Duration::from_secs(5)).await;
-        
-        counter += 1;
-        log::info!("USB task running ({})", counter);
-        
-        // Simulate processing an APDU command
-        if counter % 10 == 0 {
-            log::info!("Simulating APDU command processing");
-            
-            // Example: SELECT OpenPGP application
-            let select_cmd = vec![
-                0x00, 0xA4, 0x04, 0x00, 0x06,
-                0xD2, 0x76, 0x00, 0x01, 0x24, 0x01
-            ];
-            
-            if let Ok(apdu) = ApduCommand::parse(&select_cmd) {
-                let response = card.process_apdu(&apdu);
-                let response_bytes = response.build();
-                log::info!("Response: {} bytes", response_bytes.len());
-            }
-        }
-    }
-}
-
-/// CCID message handler (placeholder)
+/// CCID message handler
 #[allow(dead_code)]
-struct CcidHandler {
+pub struct CcidHandler {
     sequence: u8,
 }
 
 #[allow(dead_code)]
 impl CcidHandler {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self { sequence: 0 }
     }
     
     /// Process CCID message
-    fn process_message(&mut self, message: &[u8], card: &mut OpenPgpCard) -> Vec<u8, 512> {
+    pub fn process_message(&mut self, message: &[u8], card: &mut OpenPgpCard) -> Vec<u8, 512> {
         if message.len() < 10 {
             return Vec::new();
         }
         
         let msg_type = message[0];
         let length = u32::from_le_bytes([message[1], message[2], message[3], message[4]]);
-        let slot = message[5];
+        let _slot = message[5];
         let seq = message[6];
         
         self.sequence = seq;
@@ -203,6 +168,12 @@ impl CcidHandler {
     }
 }
 
+impl Default for CcidHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // Note: Full USB/CCID implementation would require:
 // - USB device descriptor with CCID class
 // - Endpoint configuration (Bulk IN/OUT, Interrupt IN)
@@ -210,5 +181,4 @@ impl CcidHandler {
 // - CCID protocol state tracking
 // - Buffer management for USB transfers
 // 
-// This is a simplified placeholder that demonstrates the structure
-// For production use, consider using a proper USB CCID library
+// For production use, consider using esp-hal USB peripheral with CCID descriptors

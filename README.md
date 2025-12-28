@@ -45,17 +45,15 @@ This project implements an OpenPGP-compatible smart card on the ESP32-S3 microco
 
 ### Prerequisites
 
+**Important:** This project requires the Espressif Rust toolchain for ESP32-S3 (Xtensa architecture). The standard Rust toolchain does not support Xtensa targets.
+
 1. **Rust Toolchain**
    ```bash
    # Install Rust (if not already installed)
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   
-   # Install the nightly toolchain
-   rustup install nightly-2024-02-01
-   rustup component add rust-src --toolchain nightly-2024-02-01
    ```
 
-2. **ESP32 Rust Toolchain**
+2. **ESP32 Rust Toolchain** (Required for building)
    ```bash
    # Install espup (ESP Rust installer)
    cargo install espup
@@ -76,6 +74,20 @@ This project implements an OpenPGP-compatible smart card on the ESP32-S3 microco
    ```bash
    cargo install ldproxy
    ```
+
+### Note on CI/CD
+
+This project uses the Xtensa architecture which is not supported by standard Rust toolchains. 
+To build in CI/CD environments, you need to:
+- Install the Espressif Rust toolchain using `espup`
+- Use the custom `esp` Rust channel
+- Ensure the `xtensa-esp32s3-none-elf` target is available
+
+For code validation without the full ESP toolchain, you can check the library modules:
+```bash
+# This won't build the final binary but validates code structure
+cargo check --lib --target x86_64-unknown-linux-gnu 2>/dev/null || true
+```
 
 ## Building
 

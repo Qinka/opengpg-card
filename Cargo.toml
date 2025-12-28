@@ -6,21 +6,12 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Embassy async runtime for embedded
-embassy-executor = { version = "0.5", features = ["arch-xtensa", "executor-thread", "integrated-timers"] }
-embassy-time = { version = "0.3", features = ["generic-queue"] }
-embassy-sync = "0.5"
-embassy-futures = "0.1"
-
 # ESP32-S3 HAL
-esp-hal = { version = "0.16", features = ["esp32s3", "async", "embassy", "embassy-time-timg0"] }
-esp-backtrace = { version = "0.11", features = ["esp32s3", "exception-handler", "panic-handler", "println"] }
-esp-println = { version = "0.9", features = ["esp32s3", "log"] }
-esp-alloc = { version = "0.3" }
-esp-storage = { version = "0.3", features = ["esp32s3"] }
-
-# USB support
-embassy-usb = "0.1"
+esp-hal = { version = "1.0", features = ["esp32s3"] }
+esp-backtrace = { version = "0.18", features = ["esp32s3", "panic-handler", "println"] }
+esp-println = { version = "0.16", features = ["esp32s3"] }
+esp-alloc = { version = "0.6" }
+esp-storage = { version = "0.4", features = ["esp32s3"] }
 
 # Cryptography
 rsa = { version = "0.9", default-features = false, features = ["sha2"] }
@@ -39,7 +30,6 @@ digest = { version = "0.10", default-features = false }
 heapless = "0.8"
 log = "0.4"
 embedded-io = "0.6"
-embedded-io-async = "0.6"
 
 [profile.dev]
 # Rust debug is too slow. 
